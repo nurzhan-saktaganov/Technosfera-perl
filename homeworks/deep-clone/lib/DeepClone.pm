@@ -78,7 +78,11 @@ sub clone {
         my $ref_map = {};
         $cloned = _clone_($orig, $ref_map);
     } or do {
+<<<<<<< HEAD
         $cloned = undef;
+=======
+       $cloned = undef;
+>>>>>>> 1e05592c1fc847b5602c62ab0621301a3d184531
     };
     return $cloned;
 }

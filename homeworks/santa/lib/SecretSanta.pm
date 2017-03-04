@@ -7,13 +7,15 @@ use DDP;
 
 sub calculate {
     my @members = @_;
-    my @res;
+
+RECALCULATE:
+    my @res = ();
     # ...
     #   push @res,[ "fromname", "toname" ];
     # ...
-    my @married;
-    my @single;
-    my %cannot_give;
+    my @married = ();
+    my @single = ();
+    my %cannot_give = ();
 
     for (@members){
         if (ref $_) { 
@@ -32,8 +34,9 @@ sub calculate {
         }
     }
 
-    my @presenters = (@married, @single);
-    my @recipients = (@married, @single);
+    # shuffling
+    my @presenters = sort {int(rand(3)) - 1} (@married, @single);
+    my @recipients = sort {int(rand(3)) - 1} (@married, @single);
 
     for my $presenter (@presenters) {
         for my $recipient (@recipients){
@@ -44,6 +47,10 @@ sub calculate {
             $cannot_give{$recipient}{$presenter} = 1;
             last;
         }
+    }
+
+    if ($#res < $#presenters) {
+        goto RECALCULATE;
     }
 
     return @res;
