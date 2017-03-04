@@ -4,6 +4,8 @@ use 5.010;
 use strict;
 use warnings;
 
+use Encode;
+
 =encoding UTF8
 
 =head1 SYNOPSIS
@@ -39,6 +41,10 @@ anagram(['пятак', 'ЛиСток', 'пятка', 'стул', 'ПяТаК', '
 
 =cut
 
+sub normalize_word {
+    return join '', sort {$a cmp $b} split(//, lc shift);
+}
+
 sub anagram {
     my $words_list = shift;
     my %result;
@@ -46,6 +52,37 @@ sub anagram {
     #
     # Поиск анограмм
     #
+    my %anagrams;
+
+    for (@$words_list) {
+        # my $word = lc $_;
+        my $word = lc decode('utf8', $_);
+        my $normalized_word = normalize_word($word);
+        unless ($anagrams{$normalized_word}){
+            $anagrams{$normalized_word} = [];
+        }
+        push @{$anagrams{$normalized_word}}, $word
+    }
+
+    for my $key (keys %anagrams) {
+        if (scalar @{$anagrams{$key}} == 1) {
+            next;
+        }
+        # my $new_key = $anagrams{$key}->[0];
+        my $new_key = encode('utf8', $anagrams{$key}->[0]);
+        $anagrams{$key} = [sort {$a cmp $b} @{$anagrams{$key}}];
+
+        my %added_words;
+        $result{$new_key} = [];
+        for my $word (@{$anagrams{$key}}){
+            if ($added_words{$word}){
+                next;
+            }
+            # push @{$result{$new_key}}, $word;
+            push @{$result{$new_key}}, encode('utf8', $word);
+            $added_words{$word} = 1;
+        }
+    }
 
     return \%result;
 }
