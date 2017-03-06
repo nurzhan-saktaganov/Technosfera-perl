@@ -42,7 +42,7 @@ anagram(['пятак', 'ЛиСток', 'пятка', 'стул', 'ПяТаК', '
 =cut
 
 sub normalize_word {
-    return join '', sort {$a cmp $b} split(//, lc shift);
+    return join '', sort {$a cmp $b} split(//, shift);
 }
 
 sub anagram {
@@ -55,32 +55,24 @@ sub anagram {
     my %anagrams;
 
     for (@$words_list) {
-        # my $word = lc $_;
-        my $word = lc decode('utf8', $_);
+        # my $word = CORE::fc $_;
+        my $word = CORE::fc decode('utf8', $_);
         my $normalized_word = normalize_word($word);
-        unless ($anagrams{$normalized_word}){
-            $anagrams{$normalized_word} = [];
-        }
+        $anagrams{$normalized_word} ||= [];
         push @{$anagrams{$normalized_word}}, $word
     }
 
     for my $key (keys %anagrams) {
-        if (scalar @{$anagrams{$key}} == 1) {
+        if (@{$anagrams{$key}} == 1) {
             next;
         }
         # my $new_key = $anagrams{$key}->[0];
         my $new_key = encode('utf8', $anagrams{$key}->[0]);
-        $anagrams{$key} = [sort {$a cmp $b} @{$anagrams{$key}}];
+        $anagrams{$key} = [sort @{$anagrams{$key}}];
 
-        my %added_words;
-        $result{$new_key} = [];
-        for my $word (@{$anagrams{$key}}){
-            if ($added_words{$word}){
-                next;
-            }
-            # push @{$result{$new_key}}, $word;
-            push @{$result{$new_key}}, encode('utf8', $word);
-            $added_words{$word} = 1;
+        $result{$new_key} = do {
+            my %seen;
+            [grep {!$seen{$_}++} map {encode('utf8', $_)} @{$anagrams{$key}}];
         }
     }
 
