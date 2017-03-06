@@ -35,6 +35,9 @@ sub calculate {
 
     my @husbands = map {$_->[0]} @pairs;
     my @wives = map {$_->[1]} @pairs;
+
+    # another more shuffling
+    @husbands[1..$#husbands - 1] = sort {shuffle_cmp()} @husbands[1..$#husbands - 1];
     
     my @gift_chain = (@husbands, @wives);
     while (@single > 0) {
