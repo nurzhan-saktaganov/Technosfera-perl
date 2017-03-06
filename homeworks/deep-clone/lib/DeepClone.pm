@@ -41,7 +41,7 @@ sub _clone_ {
 
     if (!defined $orig) {
         return undef;
-    } elsif (ref \$orig eq 'SCALAR') {
+    } elsif (not ref $orig) {
         return $orig;
     } elsif ($ref_map->{$orig}) {
         return $ref_map->{$orig};
