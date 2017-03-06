@@ -5,53 +5,47 @@ use strict;
 use warnings;
 use DDP;
 
+sub shuffle_cmp {
+    return int(rand(3)) - 1;
+}
+
 sub calculate {
     my @members = @_;
-
-RECALCULATE:
-    my @res = ();
+    my @res;
     # ...
     #   push @res,[ "fromname", "toname" ];
     # ...
-    my @married = ();
-    my @single = ();
-    my %cannot_give = ();
 
-    for (@members){
-        if (ref $_) { 
-            push @married, @$_;
-            $cannot_give{$_->[0]} = {
-                $_->[0] => 1,
-                $_->[1] => 1,
-            };
-            $cannot_give{$_->[1]} = {
-                $_->[0] => 1,
-                $_->[1] => 1,
-            };
-        } else {
-            push @single, $_;
-            $cannot_give{$_} = {$_ => 1};
-        }
+    my @pairs;
+    my @single;
+
+    @pairs = grep {ref $_} @members;
+    @single = grep {not ref $_} @members;
+
+    if (@pairs == 1 and @single < 2 or @pairs == 0 and @single < 3) {
+        die "There is no solution!";
     }
 
-    # shuffling
-    my @presenters = sort {int(rand(3)) - 1} (@married, @single);
-    my @recipients = sort {int(rand(3)) - 1} (@married, @single);
+    # shuffle singles
+    @single = sort {shuffle_cmp()} @single;
+    # shuffle pairs
+    @pairs = sort {shuffle_cmp()} @pairs;
+    # shuffle every pair
+    @pairs = map {[sort {shuffle_cmp()} @$_]} @pairs;
 
-    for my $presenter (@presenters) {
-        for my $recipient (@recipients){
-            if ($cannot_give{$presenter}{$recipient}) {
-                next;
-            }
-            push @res, [$presenter, $recipient];
-            $cannot_give{$recipient}{$presenter} = 1;
-            last;
-        }
+    my @husbands = map {$_->[0]} @pairs;
+    my @wives = map {$_->[1]} @pairs;
+    
+    my @gift_chain = (@husbands, @wives);
+    while (@single > 0) {
+        my $insert_at = int(rand(@gift_chain));
+        splice @gift_chain, $insert_at, 0, pop @single;
     }
 
-    if ($#res < $#presenters) {
-        goto RECALCULATE;
+    for my $i (0..$#gift_chain - 1) {
+        push @res, [$gift_chain[$i], $gift_chain[$i + 1]];
     }
+    push @res, [$gift_chain[-1], $gift_chain[0]];
 
     return @res;
 }
