@@ -42,7 +42,7 @@ anagram(['пятак', 'ЛиСток', 'пятка', 'стул', 'ПяТаК', '
 =cut
 
 sub normalize_word {
-    return join '', sort {$a cmp $b} split(//, shift);
+    return join '', sort split(//, shift);
 }
 
 sub anagram {
