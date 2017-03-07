@@ -27,14 +27,13 @@ sub calculate {
     }
 
     if (@pairs == 1 ) {
-    	push @pairs, [shift @single, shift @single];
+        push @pairs, [shift @single, shift @single];
     }
 
     # shuffle singles
     @single = sort {shuffle_cmp()} @single;
     # shuffle pairs
     @pairs = sort {shuffle_cmp()} @pairs;
-
     # shuffle every pair
     @pairs = map {[sort {shuffle_cmp()} @$_]} @pairs;
 
