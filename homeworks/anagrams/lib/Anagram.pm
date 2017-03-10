@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Encode;
+use feature 'fc';
 
 =encoding UTF8
 
@@ -55,8 +56,8 @@ sub anagram {
     my %anagrams;
 
     for (@$words_list) {
-        # my $word = CORE::fc $_;
-        my $word = CORE::fc decode('utf8', $_);
+        # my $word = fc $_;
+        my $word = fc decode('utf8', $_);
         my $normalized_word = normalize_word($word);
         $anagrams{$normalized_word} ||= [];
         push @{$anagrams{$normalized_word}}, $word
