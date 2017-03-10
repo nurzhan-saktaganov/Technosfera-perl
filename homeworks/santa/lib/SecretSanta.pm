@@ -5,8 +5,8 @@ use strict;
 use warnings;
 use DDP;
 
-sub shuffle_cmp {
-    return int(rand(3)) - 1;
+sub shuffle {
+	return sort {int(rand(3)) - 1} @_;
 }
 
 sub calculate {
@@ -31,17 +31,17 @@ sub calculate {
     }
 
     # shuffle singles
-    @single = sort {shuffle_cmp()} @single;
+    @single = shuffle @single;
     # shuffle pairs
-    @pairs = sort {shuffle_cmp()} @pairs;
+    @pairs = shuffle @pairs;
     # shuffle every pair
-    @pairs = map {[sort {shuffle_cmp()} @$_]} @pairs;
+    @pairs = map {[shuffle @$_]} @pairs;
 
     my @husbands = map {$_->[0]} @pairs;
     my @wives = map {$_->[1]} @pairs;
 
     # another more shuffling
-    @husbands[1..$#husbands - 1] = sort {shuffle_cmp()} @husbands[1..$#husbands - 1];
+    @husbands[1..$#husbands - 1] = shuffle @husbands[1..$#husbands - 1];
     
     my @gift_chain = (@husbands, @wives);
     while (@single > 0) {
