@@ -39,7 +39,7 @@ sub _clone_ {
     my $orig = shift;
     my $ref_map = shift;
 
-    if (!defined $orig) {
+    if (not defined $orig) {
         return undef;
     } elsif (not ref $orig) {
         return $orig;
@@ -78,7 +78,7 @@ sub clone {
         my $ref_map = {};
         $cloned = _clone_($orig, $ref_map);
     } or do {
-        $cloned = undef;
+        $cloned = undef if not defined $cloned;
     };
     return $cloned;
 }
