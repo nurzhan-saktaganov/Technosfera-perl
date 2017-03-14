@@ -69,7 +69,7 @@ sub parse_file {
         $datetime =~ s/:\d+ /:00 /;
 
         push @{$statistics{$ip}}, {
-            'timestamp' => str2time($datetime),
+            'timestamp' => $datetime, # str2time($datetime),
             'code' => $code,
             'sent' => $sent,
             'compress_rate' => $compress_rate,
