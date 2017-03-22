@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use List::Util qw(sum0);
 use List::MoreUtils qw(uniq);
-
+our $VERSION = 1.0;
 
 my $filepath = $ARGV[0];
 die "USAGE:\n$0 <log-file.bz2>\n"  unless $filepath;
