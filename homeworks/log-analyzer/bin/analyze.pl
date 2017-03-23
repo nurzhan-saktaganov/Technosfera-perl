@@ -66,18 +66,14 @@ sub parse_file {
         $compress_rate = 1.0 if $compress_rate eq '-';
         $result->{$ip} ||= {};
 
-        # ip stats
         $result->{$ip}{'IP'} //= $ip;
-        $result->{$ip}{'minutes'}{$datetime} = 1;
-        $result->{$ip}{$code} += $sent;
-        $result->{$ip}{'data'} += int($sent * $compress_rate) if $code eq '200';
-        ++$result->{$ip}{'count'};
 
-        # total stats
-        $result->{'total'}{'minutes'}{$datetime} = 1;
-        $result->{'total'}{$code} += $sent;
-        $result->{'total'}{'data'} += int($sent * $compress_rate) if $code eq '200';
-        ++$result->{'total'}{'count'};
+        for my $ip ($ip, 'total') {
+            $result->{$ip}{'minutes'}{$datetime} = 1;
+            $result->{$ip}{$code} += $sent;
+            $result->{$ip}{'data'} += int($sent * $compress_rate) if $code eq '200';
+            ++$result->{$ip}{'count'};
+        }
     }
     close $fd;
 
