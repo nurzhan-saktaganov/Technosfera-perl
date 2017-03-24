@@ -39,8 +39,6 @@ print PI;               # 3.14
 
 sub import {
     my $module_name = shift;
-    #print "================\n";
-    #print "Use $module_name\n";
 
     our @EXPORT;
     our @EXPORT_OK;
@@ -52,34 +50,49 @@ sub import {
         # return;
         goto &Exporter::import;
     }
-
+    die 'Even-sized list expected ' if @_ % 2;
+    for my $i (0..$#_){
+       die 'Wrong hash key' if $i % 2 == 0 and not $_[$i];
+    }
     myconst->export_to_level(1, @EXPORT = qw/import/);
 
     @EXPORT = qw/@EXPORT @EXPORT_OK %EXPORT_TAGS/;
+
     my %hash = @_;
     while (my ($k1, $v1) = each %hash){
         if (not ref $v1){
-            $v1 = qq($v1);
-            eval ("sub $k1 () {return '$v1';}");
-            $EXPORT_TAGS{'all'} ||= [];
-            push @{$EXPORT_TAGS{'all'}}, "$k1";
-            push @EXPORT, "$k1";
+            _register_const($k1, $v1, 'all');
             next;
+        } elsif (ref $v1 ne 'HASH'){
+            die 'HASH ref expected';
         }
         while (my ($k2, $v2) = each %$v1){
-            $v2 = qq($v2);
-            eval ("sub $k2 () {return '$v2';}");
-            $EXPORT_TAGS{'all'} ||= [];
-            push @{$EXPORT_TAGS{'all'}}, "$k2";
-            $EXPORT_TAGS{"$k1"} ||= [];
-            push @{$EXPORT_TAGS{"$k1"}}, "$k2";
-            push @EXPORT, "$k2";
-        }
+            _register_const ($k2, $v2, 'all', $k1);
+        }    
     }
     myconst->export_to_level(1, @EXPORT);
 
     shift @EXPORT for (1..3);
     @EXPORT_OK = @EXPORT;
+}
+
+sub _register_const($$$@) {
+    our @EXPORT;
+    our %EXPORT_TAGS;
+    my ($name, $value, @groups) = @_;
+    # print "_reg_const: @_\n";
+    die 'Refs are forbidden' if (ref $name or ref $value);
+    die 'Const name is not valid' unless $name =~ m/^[[:alpha:]_][\w_]*$/;
+    $value = quotemeta($value);
+    eval ("sub $name () {return \"$value\";}");
+    die $@ if $@;
+    for my $group (@groups) {
+        die 'Group name is not valid' unless $group =~ m/^[[:alpha:]_][\w_]*$/;
+        $EXPORT_TAGS{$group} ||= [];
+        push @{$EXPORT_TAGS{$group}}, "$name";
+        push @EXPORT, "$name";
+    }
+    return;
 }
 
 1;
