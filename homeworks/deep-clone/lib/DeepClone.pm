@@ -77,8 +77,9 @@ sub clone {
     eval {
         my $ref_map = {};
         $cloned = _clone_($orig, $ref_map);
+        1;
     } or do {
-        $cloned = undef if not defined $cloned;
+        $cloned = undef;
     };
     return $cloned;
 }
