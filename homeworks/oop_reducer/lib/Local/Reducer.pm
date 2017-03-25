@@ -63,17 +63,29 @@ sub _init {
     return $self;
 }
 
-sub reduce_n {
-    return undef;
-}
-
-sub reduce_all {
-    return undef;
-}
-
 sub reduced {
     my $self = shift;
     return $self->{'reduced'};
+}
+
+sub reduce_n {
+    my ($self, $n) = @_;
+    for (1..$n) {
+        last unless $self->_reduce_once();
+    }
+    return $self->reduced();
+}
+
+sub reduce_all {
+    my $self = shift;
+    while (1) {
+        last unless $self->_reduce_once();
+    }
+    return $self->reduced();
+}
+
+sub _reduce_once {
+    return 0;
 }
 
 1;

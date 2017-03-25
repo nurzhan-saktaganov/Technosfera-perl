@@ -41,32 +41,16 @@ sub _init {
     return $self;
 }
 
-sub reduce_n {
-    my ($self, $n) = @_;
-    for (1..$n) {
-        my $src = $self->{'source'}->next();
-        last unless defined $src;
-        my $row = $self->{'row_class'}->new(src => $src);
-        next unless defined $row;
-        my $value = $row->get($self->{'field'}, 0);
-        next unless looks_like_number($value);
-        $self->{'reduced'} += $value;
-    }
-    return $self->{'reduced'};
-}
-
-sub reduce_all {
+sub _reduce_once {
     my $self = shift;
-    while (1) {
-        my $src = $self->{'source'}->next();
-        last unless defined $src;
-        my $row = $self->{'row_class'}->new(src => $src);
-        next unless defined $row;
-        my $value = $row->get($self->{'field'}, 0);
-        next unless looks_like_number($value);
-        $self->{'reduced'} += $value;
-    }
-    return $self->{'reduced'};
+    my $src = $self->{'source'}->next();
+    return 0 unless defined $src;
+    my $row = $self->{'row_class'}->new(src => $src);
+    return 1 unless defined $row;
+    my $value = $row->get($self->{'field'}, 0);
+    return 1 unless looks_like_number($value);
+    $self->{'reduced'} += $value;
+    return 1;
 }
 
 1;

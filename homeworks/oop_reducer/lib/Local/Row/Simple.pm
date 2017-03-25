@@ -32,7 +32,7 @@ sub _init {
     }
     my @src = split(",", $args{'src'});
     for my $key_value (@src){
-        return undef unless $key_value =~ m/[^:,]+:[^:,]+/;
+        return undef unless $key_value =~ m/^[^:,]+:[^:,]+$/;
         my ($key, $value) = split(":", $key_value);
         $self->{$key} = $value;
     }
