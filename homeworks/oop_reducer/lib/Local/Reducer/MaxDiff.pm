@@ -48,8 +48,7 @@ sub _init {
     $self->{'top_name'} = $args{'top'};
     $self->{'bottom_name'} = $args{'bottom'};
 
-    $self->{'top'} = undef;
-    $self->{'bottom'} = undef;
+    $self->{'maxdiff'} = undef;
     return $self;
 }
 
@@ -71,8 +70,7 @@ sub reduce_all {
 
 sub reduced {
     my $self = shift;
-    return undef unless $self->{'top'} // $self->{'bottom'};
-    return $self->{'top'} - $self->{'bottom'};
+    return $self->{'maxdiff'};
 }
 
 sub _reduce_once {
@@ -84,15 +82,12 @@ sub _reduce_once {
     my $top = $row->get($self->{'top_name'}, undef);
     my $bottom = $row->get($self->{'bottom_name'}, undef);
 
-    $self->{'top'} //= $top;
-    $self->{'bottom'} //= $bottom;
-    
-    if (looks_like_number($top) and $top > $self->{'top'}) {
-        $self->{'top'} = $top;
-    }
-    if (looks_like_number($bottom) and $bottom < $self->{'bottom'}) {
-        $self->{'bottom'} = $bottom;
-    }
+    return 1 unless $top and $bottom;
+    return 1 unless looks_like_number($top) and looks_like_number($bottom);
+
+    my $diff = $top - $bottom;
+    $self->{'maxdiff'} //= $diff;
+    $self->{'maxdiff'} = $diff if $diff > $self->{'maxdiff'};
     return 1;
 }
 
