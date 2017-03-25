@@ -72,7 +72,8 @@ sub reduce_all {
 }
 
 sub reduced {
-    return undef;
+    my $self = shift;
+    return $self->{'reduced'};
 }
 
 1;

@@ -47,8 +47,6 @@ sub _init {
 
     $self->{'top_name'} = $args{'top'};
     $self->{'bottom_name'} = $args{'bottom'};
-
-    $self->{'maxdiff'} = undef;
     return $self;
 }
 
@@ -68,11 +66,6 @@ sub reduce_all {
     return $self->reduced();
 }
 
-sub reduced {
-    my $self = shift;
-    return $self->{'maxdiff'};
-}
-
 sub _reduce_once {
     my $self = shift;
     my $src = $self->{'source'}->next();
@@ -86,8 +79,7 @@ sub _reduce_once {
     return 1 unless looks_like_number($top) and looks_like_number($bottom);
 
     my $diff = $top - $bottom;
-    $self->{'maxdiff'} //= $diff;
-    $self->{'maxdiff'} = $diff if $diff > $self->{'maxdiff'};
+    $self->{'reduced'} = $diff if $diff > $self->{'reduced'};
     return 1;
 }
 

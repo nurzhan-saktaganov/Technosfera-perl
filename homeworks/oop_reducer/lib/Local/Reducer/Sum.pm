@@ -69,9 +69,4 @@ sub reduce_all {
     return $self->{'reduced'};
 }
 
-sub reduced {
-    my $self = shift;
-    return $self->{'reduced'};
-}
-
 1;
