@@ -1,4 +1,5 @@
 package Local::Row::Simple;
+use parent qw/Local::Row/;
 
 use strict;
 use warnings;
@@ -21,12 +22,6 @@ our $VERSION = '1.00';
 
 =cut
 
-sub new {
-    my ($class, @args) = @_;
-    my $self = bless {}, $class;
-    return $self->_init(@args);
-}
-
 sub _init {
     my ($self, %args) = @_;
     unless (exists $args{'src'}) {
@@ -42,12 +37,6 @@ sub _init {
         $self->{$key} = $value;
     }
     return $self;
-}
-
-sub get {
-    my ($self, $name, $default) = @_;
-    return $self->{$name} if exists $self->{$name};
-    return $default;
 }
 
 1;

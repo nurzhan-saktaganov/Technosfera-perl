@@ -33,7 +33,9 @@ sub _init {
 }
 
 sub get {
-    return undef;
+    my ($self, $name, $default) = @_;
+    return $self->{$name} if exists $self->{$name};
+    return $default;
 }
 
 1;
