@@ -34,7 +34,7 @@ sub _init {
     my $json;
     eval {
         $json = decode_json($args{'src'});
-        die if ref $json ne 'HASH';
+        die 'Not hash' if ref $json ne 'HASH';
         1;
     } or do {
         return undef;
