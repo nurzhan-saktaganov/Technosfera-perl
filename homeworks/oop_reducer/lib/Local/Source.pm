@@ -32,4 +32,8 @@ sub _init {
     return $self;
 }
 
+sub next {
+	return undef;
+}
+
 1;
