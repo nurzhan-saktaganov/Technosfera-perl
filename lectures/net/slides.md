@@ -716,7 +716,7 @@ $flags = fcntl($fd, F_SETFL, $flags | O_NONBLOCK)
 ```perl
 use Errno qw(EAGAIN EINTR EWOULDBLOCK);
 my $read = sysread($fd, my $buf, SOMELENGTH);
-if ($read) { # read >= 0
+if ($read) { # read > 0
     # work with data in buf
 }
 elsif (defined $read) { # read == 0
@@ -1942,6 +1942,8 @@ for(1..10) {
 
 Необходимо написать краулер с использованием `AnyEvent` или `Coro`
 
+https://github.com/Nikolo/Technosfera-perl/tree/master/homeworks/crawler
+
 * На вход подаётся URL и фактор паралльности.
 
 Требования к роботу:
@@ -1952,6 +1954,7 @@ for(1..10) {
 * Для каждой скачанной страницы запомнить её размер
 * Если страниц более `1000`, собрать максимум `1000` уникальных ссылок
 * Относительные ссылки превращать в абсолютные.
+* Из сылок должны быть вырезаны теги привязки
 * Обрабатывать (запрашивать) только ссылки, которые начинаются на URL
 * Вывести `Top-10` страниц по размеру и суммарный размер всех страниц
 
