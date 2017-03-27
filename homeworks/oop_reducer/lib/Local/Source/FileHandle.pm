@@ -1,4 +1,4 @@
-package Local::Source::FileHandler;
+package Local::Source::FileHandle;
 use parent qw/Local::Source/;
 
 use strict;
@@ -33,7 +33,9 @@ sub _init {
 
 sub next {
     my $self = shift;
-    return readline($self->{'fh'});
+    my $line = readline($self->{'fh'});
+    chomp $line if defined $line;
+    return $line;
 }
 
 1;
