@@ -43,9 +43,9 @@ sub _init {
 
 sub _reduce_once {
     my $self = shift;
-    my $src = $self->{'source'}->next();
-    return 0 unless defined $src;
-    my $row = $self->{'row_class'}->new(src => $src);
+    my $str = $self->{'source'}->next();
+    return 0 unless defined $str;
+    my $row = $self->{'row_class'}->new(str => $str);
     return 1 unless defined $row;
     my $value = $row->get($self->{'field'}, 0);
     return 1 unless looks_like_number($value);

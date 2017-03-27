@@ -22,9 +22,15 @@ our $VERSION = '1.00';
 =cut
 
 sub new {
-    my ($class, @args) = @_;
+    my ($class, %args) = @_;
+    unless (exists $args{'str'}) {
+        die '"str" param required';
+    }
+    if (ref $args{'str'}) {
+        return undef;
+    }
     my $self = bless {}, $class;
-    return $self->_init(@args);
+    return $self->_init(%args);
 }
 
 sub _init {

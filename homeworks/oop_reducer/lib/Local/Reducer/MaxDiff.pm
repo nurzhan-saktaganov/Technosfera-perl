@@ -52,9 +52,9 @@ sub _init {
 
 sub _reduce_once {
     my $self = shift;
-    my $src = $self->{'source'}->next();
-    return 0 unless defined $src;
-    my $row = $self->{'row_class'}->new(src => $src);
+    my $str = $self->{'source'}->next();
+    return 0 unless defined $str;
+    my $row = $self->{'row_class'}->new(str => $str);
     return 1 unless defined $row;
     my $top = $row->get($self->{'top_name'}, undef);
     my $bottom = $row->get($self->{'bottom_name'}, undef);

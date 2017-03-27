@@ -25,15 +25,9 @@ our $VERSION = '1.00';
 
 sub _init {
     my ($self, %args) = @_;
-    unless (exists $args{'src'}) {
-        die '"src" param required';
-    }
-    if (ref $args{'src'}) {
-        return undef;
-    }
     my $json;
     eval {
-        $json = decode_json($args{'src'});
+        $json = decode_json($args{'str'});
         die 'Not a hash' if ref $json ne 'HASH';
         1;
     } or do {

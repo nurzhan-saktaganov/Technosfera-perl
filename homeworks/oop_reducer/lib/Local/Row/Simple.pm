@@ -24,13 +24,7 @@ our $VERSION = '1.00';
 
 sub _init {
     my ($self, %args) = @_;
-    unless (exists $args{'src'}) {
-        die '"src" param required';
-    }
-    if (ref $args{'src'}) {
-        return undef;
-    }
-    my @src = split(",", $args{'src'});
+    my @src = split(",", $args{'str'});
     for my $key_value (@src){
         return undef unless $key_value =~ m/^[^:]+:[^:]+$/;
         my ($key, $value) = split(":", $key_value);
