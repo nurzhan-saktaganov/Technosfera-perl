@@ -50,7 +50,7 @@ sub parse_file {
             }
             1;
         } or do {
-            warn 'Unexpected log format: ' . $log_line;
+            # warn 'Unexpected log format: ' . $log_line;
             next;
         };
 
