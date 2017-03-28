@@ -5,7 +5,7 @@ use warnings;
 our $VERSION = 1.0;
 
 my $filepath = $ARGV[0];
-die "USAGE:\n$0 <log-file.bz2>\n"  unless $filepath;
+die "USAGE:\n$0 <log-file>\n"  unless $filepath;
 die "File '$filepath' not found\n" unless -f $filepath;
 
 my $parsed_data = parse_file($filepath);
@@ -17,42 +17,36 @@ sub parse_file {
 
     # you can put your code here
 
+       my $fd;
+    if ($file =~ /\.bz2$/) {
+        open $fd, "-|", "bunzip2 < $file" or die "Can't open '$file' via bunzip2: $!";
+    } else {
+        open $fd, "<", $file or die "Can't open '$file': $!";
+    }
+
     my $result = {
-        "total" => {
-            "IP" => "total",
-            "minutes" => {},
+        'total' => {
+            'IP' => 'total',
+            'minutes' => {},
         },
     };
 
-    my $line_regex = qr/
-        ^
-        (?<ip>(\d+\.){3}\d+)\s
-        \[(?<datetime>[^\]]+)\]\s
-        "(?<request>[^"]+)"\s
-        (?<code>\d+)\s
-        (?<sent>\d+)\s
-        "(?<refferer>[^"]+)"\s
-        "(?<user_agent>[^"]+)"\s
-        "(?<compress_rate>[\d\.-]+)"
-        $
-    /x;
-
-    open my $fd, "-|", "bunzip2 < $file" or die "Can't open '$file': $!";
     while (my $log_line = <$fd>) {
 
         # you can put your code here
         # $log_line contains line from log file
-        $log_line =~ $line_regex;
-
-        eval {
-            for ('ip', 'datetime', 'code', 'sent', 'compress_rate'){
-                die 'Not defined' unless exists $+{$_};
-            }
-            1;
-        } or do {
-            # warn 'Unexpected log format: ' . $log_line;
-            next;
-        };
+        $log_line =~ qr/
+            ^
+            (?<ip>(\d+\.){3}\d+)\s
+            \[(?<datetime>[^:]+(:\d\d){2})[^\]]+\]\s
+            "(?<request>[^"]+)"\s
+            (?<code>\d+)\s
+            (?<sent>\d+)\s
+            "(?<refferer>[^"]+)"\s
+            "(?<user_agent>[^"]+)"\s
+            "(?<compress_rate>[\d\.-]+)"
+            $
+        /x or next;
 
         my $ip = $+{'ip'};
         my $datetime = $+{'datetime'};
@@ -60,13 +54,11 @@ sub parse_file {
         my $sent = $+{'sent'};
         my $compress_rate = $+{'compress_rate'};
 
-        $datetime =~ s/:\d\d \+0300//;
         $compress_rate = 1.0 if $compress_rate eq '-';
-        $result->{$ip} ||= {};
-
-        $result->{$ip}{'IP'} //= $ip;
-
+        
         for my $ip ($ip, 'total') {
+            $result->{$ip} ||= {};
+            $result->{$ip}{'IP'} //= $ip;
             $result->{$ip}{'minutes'}{$datetime} = 1;
             $result->{$ip}{$code} += $sent;
             $result->{$ip}{'data'} += int($sent * $compress_rate) if $code eq '200';
