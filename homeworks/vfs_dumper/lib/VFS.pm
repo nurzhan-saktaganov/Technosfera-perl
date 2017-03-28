@@ -16,25 +16,54 @@ sub mode2s {
     # но какой-то злодей всё удалил.
     my $mode_bin = shift;
     my $mode = {};
+    my $true = JSON::XS::true;
+    my $false = JSON::XS::false;
     for my $to ('other', 'group', 'user'){
         $mode->{$to} = {};
         for my $acces_type ('exectute', 'write', 'read'){
-            $mode->{$to}{$acces_type} = $mode_bin & 1;
+            $mode->{$to}{$acces_type} = ($mode_bin & 1) ? $true : $false;
             $mode_bin >>= 1;
         }
     }
     return $mode;
 }
 
-sub parse_big_endian_int {
+sub bytes_to_int_BE {
     my @byte_array = @_;
     my $int = 0;
     while (@byte_array) {
-        my $byte = shift @byte_array;
         $int <<= 8;
-        $int += ord($byte);
+        $int += shift @byte_array;
     }
     return $int;
+}
+
+sub extract_name {
+    my $array_ref = shift;
+    my $name_length = extract_int($array_ref, 2);
+    my @name = splice(@$array_ref, 0, $name_length);
+    my $name_utf8 = join '', pack("C*", @name);
+    my $name = decode('utf8', $name_utf8);
+    return $name;
+}
+
+sub extract_access_rights {
+    my $array_ref = shift;
+    my $access_rights = extract_int($array_ref, 2);
+    return mode2s($access_rights);
+}
+
+sub extract_int {
+    my ($array_ref, $length) = @_;
+    my @byte_array = splice(@$array_ref, 0, $length);
+    return bytes_to_int_BE(@byte_array);
+}
+
+sub extract_sha1 {
+    my $array_ref = shift;
+    my @sha1 = splice(@$array_ref, 0, 20);
+    @sha1 = map {sprintf("%02x", $_)} @sha1;
+    return join '', @sha1;
 }
 
 sub parse {
@@ -44,80 +73,66 @@ sub parse {
     # сюда. Чтобы тесты заработали, вам предстоит написать всё заново.
     die 'Empty imput!' unless $buf;
 
-    my @data = map {chr($_)} unpack "C*", $buf;
-
-    if (@data and $data[0] ne 'D' and $data[0] ne 'Z'){
+    unless ($buf =~ m/^[D|Z]/) {
         die "The blob should start from 'D' or 'Z'";
     }
-    my @stack;
 
-    my $mount_point = []; #$root_mount_point;
+    my @data = unpack "C*", $buf;
+
+    my ($D, $I, $F, $U, $Z) = unpack "C*", "DIFUZ";
+
+    my @stack;
+    my $root = [];
+    my $mount_point = $root;
+
     push @stack, $mount_point;
 
     while (@data) {
         my $command = shift @data;
-        #print "Command: $command\n";
 
         given ($command){
-            when ('D') {
-                my @name_length = splice(@data, 0, 2);
-                my $name_length = parse_big_endian_int(@name_length);
-                my @dir_name = splice(@data, 0, $name_length);
-                my @access_rights = splice(@data, 0, 2);
-                my $access_rights = parse_big_endian_int(@access_rights);
-                die 'Wrong format!' if 'I' ne shift @data;
+            when ($D) {
+                my $dir = {};
+                $dir->{'type'} = 'directory';
+                $dir->{'name'} = extract_name(\@data);
+                $dir->{'mode'} = extract_access_rights(\@data);
+                $dir->{'list'} = [];
 
-                my $path = {};
-                $path->{'type'} = 'directory';
-                $path->{'name'} = decode('utf8', join('', @dir_name));
-                $path->{'mode'} = mode2s($access_rights);
-                $path->{'list'} = [];
+                die 'Wrong format!' if $I ne shift @data;
 
-                push @$mount_point, $path;
-                $mount_point = $path->{'list'};
+                push @$mount_point, $dir;
+                $mount_point = $dir->{'list'};
                 push @stack, $mount_point;
             }
-            when ('F') {
-                die 'Wrong format' if @stack == 1;
-                my @name_length = splice(@data, 0, 2);
-                my $name_length = parse_big_endian_int(@name_length);
-                my @file_name = splice(@data, 0, $name_length);
-                my @access_rights = splice(@data, 0, 2);
-                my $access_rights = parse_big_endian_int(@access_rights);
-                my @file_size = splice(@data, 0, 4);
-                my $file_size = parse_big_endian_int(@file_size);
-                my @sha1 = splice(@data, 0, 20);
+            when ($F) {
+                die 'File cannot be in root level' if @stack == 1;
+                my $file = {};
+                $file->{'type'} = 'file';
+                $file->{'name'} = extract_name(\@data);
+                $file->{'mode'} = extract_access_rights(\@data);
+                $file->{'size'} = extract_int(\@data, 4);
+                $file->{'hash'} = extract_sha1(\@data);
 
-                my $path = {};
-                $path->{'type'} = 'file';
-                $path->{'name'} = decode('utf8', join('', @file_name));
-                $path->{'mode'} = mode2s($access_rights);
-                $path->{'size'} = $file_size;
-                $path->{'hash'} = join '', map {sprintf("%02x", ord($_))} @sha1;
-
-                push @$mount_point, $path;
+                push @$mount_point, $file;
             }
-            when ('U') {
+            when ($U) {
                 $mount_point = pop @stack;
                 next if @stack > 1;
-                die 'Wrong format!' if shift @data ne 'Z';
+                die 'Root level forbidden' if shift @data ne $Z;
                 last;
             }
-            when ('Z') {
+            when ($Z) {
                 last;
             }
             default {
-                die 'Wrong format!';
+                die 'Unexpected command: '. chr($command)."\n";
             }
         }
     }
-    $mount_point = pop @stack;
 
     die "Garbage ae the end of the buffer" if @data;
-    # die "Stack" if @stack;
-    # die "AHA" if @$mount_point > 1;
-    return {} if @$mount_point == 0;
-    return $mount_point->[0];
+    return {} if @$root == 0;
+    return $root->[0];
 }
 
 1;
