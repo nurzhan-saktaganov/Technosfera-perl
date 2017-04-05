@@ -20,7 +20,7 @@ sub mode2s {
     my $false = JSON::XS::false;
     for my $to ('other', 'group', 'user'){
         $mode->{$to} = {};
-        for my $acces_type ('exectute', 'write', 'read'){
+        for my $acces_type ('execute', 'write', 'read'){
             $mode->{$to}{$acces_type} = ($mode_bin & 1) ? $true : $false;
             $mode_bin >>= 1;
         }
