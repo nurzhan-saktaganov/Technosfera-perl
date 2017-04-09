@@ -78,15 +78,17 @@ sub report {
     my $result = shift;
 
     # you can put your code here
+    my $total = delete $result->{'total'};
     my @table = sort {$b->{'count'} <=> $a->{'count'}} values %$result;
-    my @codes = sort grep {$_ =~ m/\d+/} keys %{$result->{'total'}};
+    my @codes = sort grep {$_ =~ m/\d+/} keys %{$total};
     my @headers = ('IP', 'count', 'avg', 'data', @codes);
 
-    if (@table < 2) {
+    if (@table == 0) {
         return;
     }
 
-    @table = @table[0..10];
+    @table = @table[0..9] if @table > 10;
+    unshift @table, $total;
 
     print join("\t", @headers) . "\n";
 
