@@ -85,8 +85,6 @@ sub parse {
     my $root = [];
     my $mount_point = $root;
 
-    push @stack, $mount_point;
-
     while (@data) {
         my $command = shift @data;
 
@@ -101,8 +99,8 @@ sub parse {
                 die 'Wrong format!' if $I ne shift @data;
 
                 push @$mount_point, $dir;
-                $mount_point = $dir->{'list'};
                 push @stack, $mount_point;
+                $mount_point = $dir->{'list'};
             }
             when ($F) {
                 die 'File cannot be in root level' if @stack == 1;
@@ -117,7 +115,7 @@ sub parse {
             }
             when ($U) {
                 $mount_point = pop @stack;
-                next if @stack > 1;
+                next if @stack > 0;
                 die 'Root level forbidden' if shift @data ne $Z;
                 last;
             }
