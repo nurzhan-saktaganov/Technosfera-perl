@@ -1,74 +1,19 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+
 use AnyEvent::Socket;
 use AnyEvent::Handle;
+use AnyEvent::HTTP;
+
 use Data::Validate::URI qw(is_web_uri);
-use URI::URL;
-
-sub transmit {
-    my ($remote_url, $method, $write) = @_;
-
-    my $url = URI::URL->new($remote_url);
-
-    my $hostname = $url->host;
-
-    tcp_connect $hostname, 'http', sub {
-        my ($fh) = @_
-                or die "$address connect failed: $!";
-
-        my $headers;
-
-        my $h = AnyEvent::Handle->new(fh=>$fh);
-
-        my $when_headers_got = sub {
-            if ($method eq 'HEAD'){
-                my $len = length $headers;
-                $write->("OK $len\n$headers");
-                $h->destroy;
-                return;
-            }
-
-            my $len = 'UNKNOWN';
-            $len = $+{'len'} if $headers =~ q/\r\nContent-Length: (?<len>\d+)\r\n/; 
-            $write->("OK $len\n");
-            $h->on_read(sub {
-                $write->($_[0]->rbuf);
-                $_[0]->rbuf = '';
-            });
-        };
-
-        $h->on_eof(sub {
-            $h->destroy;
-        });
-
-        $h->on_error(sub {
-            $h->destroy;
-        });
-
-        my $reader; $reader = sub {
-            my ($hdl, $line) = @_;
-            if (length $line) {
-                $headers .= $line . "\r\n";
-                $h->push_read(line=>$reader);
-            } else {
-                $when_headers_got->();
-            }
-        };
-        $h->push_read(line => $reader);
-                
-        $h->push_write(
-            "$method $remote_url HTTP/1.1\n" .
-            "Host: $hostname\n" .
-            "Accept: text/html\n" .
-            "User-Agent: GoogleBot\n\n"
-        );
-   };
-};
 
 tcp_server '0.0.0.0', 8080, sub {
     my $fh = shift;
 
-    my $remote_url;
+    my $remote_url = 'https://mail.ru';
+
     my $h = AnyEvent::Handle->new(fh=>$fh);
 
     my $url = sub {
@@ -87,8 +32,15 @@ tcp_server '0.0.0.0', 8080, sub {
             $h->push_write("URL not set\n");
             return;
         }
-        transmit($remote_url, 'HEAD', sub {
-            $h->push_write(shift);
+        http_head($remote_url, sub {
+            my ($data, $headers) = @_;
+            my $response = '';
+            for my $key (keys %{$headers}) {
+                $response .= sprintf("%s: %s\n", $key, $headers->{$key});
+            }
+            my $len = length $response;
+            $h->push_write("OK $len\n");
+            $h->push_write($response);
         });
     };
 
@@ -97,8 +49,11 @@ tcp_server '0.0.0.0', 8080, sub {
             $h->push_write("URL not set\n");
             return;
         }
-        transmit($remote_url, 'GET', sub {
-            $h->push_write(shift);
+        http_get($remote_url, sub {
+            my ($data, $headers) = @_;
+            my $len = length $data;
+            $h->push_write("OK $len\n");
+            $h->push_write($data);
         });
     };
 
