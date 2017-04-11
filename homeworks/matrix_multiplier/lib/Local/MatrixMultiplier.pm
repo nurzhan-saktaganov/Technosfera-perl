@@ -66,8 +66,7 @@ sub mult ($$$) {
         for my $row (@rows){
             print $w join(' ', @$row) . "\n";
         }
-
-        select((select($w), $| = 1)[0]);
+        $w->autoflush(1);
         close($w);
         exit;
     }
