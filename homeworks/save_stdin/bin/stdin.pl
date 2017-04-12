@@ -20,14 +20,14 @@ sub main {
     my $double_sigint = 0;
 
     $SIG{'INT'} = sub {
-        unless ($double_sigint) {
-            $double_sigint++;
-            print STDERR "Double Ctrl+C for exit";
-            return;
+        if ($double_sigint){
+            $avg_lentgh = $symbols / $lines if $lines > 0;
+            print "$symbols $lines $avg_lentgh\n";
+            exit;
         }
-        $avg_lentgh = $symbols / $lines if $lines > 0;
-        print "$symbols $lines $avg_lentgh\n";
-        exit;
+        $double_sigint++;
+        print STDERR "Double Ctrl+C for exit";
+        return;
     };
 
     print "Get ready\n";
@@ -43,7 +43,4 @@ sub main {
     print "$symbols $lines $avg_lentgh\n";
 }
 
-# Yes, Python like style :)
-if (__PACKAGE__ eq 'main') {
-    main;
-}
+main;
